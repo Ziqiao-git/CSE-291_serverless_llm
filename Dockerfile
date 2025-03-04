@@ -2,7 +2,7 @@
 #  Dockerfile Example for vLLM on DSMLP
 # -------------------------------------------------------------
 # Option 1: Start from a UCSD EdTech Services GPU image:
-ARG BASE_CONTAINER=ghcr.io/ucsd-ets/scipy-ml:latest
+ARG BASE_CONTAINER=ghcr.io/ucsd-ets/datascience-notebook:2025.1-stable
 FROM ${BASE_CONTAINER}
 
 # Switch to root to install packages
