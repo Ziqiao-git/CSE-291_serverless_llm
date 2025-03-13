@@ -16,8 +16,8 @@ RUN apt-get update && \
 
 # 3. Install python libraries, including accelerate, transformers, etc.
 #    `--no-cache-dir` helps reduce final image size.
-RUN mkdir -p /home/jovyan/.cache/huggingface/transformers && \
-    chown -R jovyan /home/jovyan/.cache/huggingface
+RUN mkdir -p /home/zixi/.cache/huggingface/transformers && \
+    chown -R zixi /home/zixi/.cache/huggingface
 
 RUN pip install --no-cache-dir \
     accelerate \
@@ -25,9 +25,9 @@ RUN pip install --no-cache-dir \
     torch
 
 
-ENV TRANSFORMERS_CACHE=/home/jovyan/.cache/huggingface/transformers
+ENV TRANSFORMERS_CACHE=/home/zixi/.cache/huggingface/transformers
 
-USER jovyan
+USER zixi
 
 RUN python -c "\
 from transformers import AutoModelForCausalLM, AutoTokenizer;\
@@ -35,7 +35,7 @@ AutoTokenizer.from_pretrained('EleutherAI/pythia-1b');\
 AutoModelForCausalLM.from_pretrained('EleutherAI/pythia-1b');\
 print('Pre-cached Pythia-1B in Docker image')"
 
-COPY llm-serve.py /home/jovyan/llm-serve.py
+COPY llm-serve.py /home/zixi/llm-serve.py
 
 # # 3) install packages using notebook user
 # RUN pip install --no-cache-dir vllm 
