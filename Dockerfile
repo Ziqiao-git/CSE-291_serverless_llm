@@ -30,11 +30,10 @@ ENV TRANSFORMERS_CACHE=/home/jovyan/.cache/huggingface/transformers
 USER jovyan
 
 RUN python -c "\
-import logging; logging.basicConfig(level=logging.INFO); \
-from transformers import AutoModelForCausalLM, AutoTokenizer; \
-AutoTokenizer.from_prrained('EleutherAI/pythia-125m'); \
-AutoModelForCausalLM.om_pretrained('EleutherAI/pythia-125m'); \
-print('Done pre-caching pythia-125m!')"
+from transformers import AutoModelForCausalLM, AutoTokenizer;\
+AutoTokenizer.from_pretrained('EleutherAI/pythia-1b');\
+AutoModelForCausalLM.from_pretrained('EleutherAI/pythia-1b');\
+print('Pre-cached Pythia-1B in Docker image')"
 
 COPY llm-serve.py /home/jovyan/llm-serve.py
 
