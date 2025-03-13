@@ -1,36 +1,44 @@
-# -------------------------------------------------------------
-#  Dockerfile Example for vLLM on DSMLP
-# -------------------------------------------------------------
-# Option 1: Start from a UCSD EdTech Services GPU image:
-ARG BASE_CONTAINER=ghcr.io/ucsd-ets/datascience-notebook:2025.1-stable
+ARG BASE_CONTAINER=ghcr.io/ucsd-ets/scipy-ml-notebook:2025.2-stable
 FROM ${BASE_CONTAINER}
 
-# Switch to root to install packages
 USER root
 
+# # RUN python -c "\
+# # from transformers import AutoModelForCausalLM, AutoTokenizer;\
+# # AutoTokenizer.from_pretrained('EleutherAI/pythia-1b');\
+# # AutoModelForCausalLM.from_pretrained('EleutherAI/pythia-1b');\
+# # print('Pythia-1B downloaded into the container. Cache at:', '${TRANSFORMERS_CACHE}')"
+
 # Install any system packages you might need
-# (Below is just an example)
 RUN apt-get update && \
     apt-get install -y htop && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* 
 
-# Install vLLM and any additional Python libraries
-# vLLM includes both CPU and GPU logic. Because scipy-ml
-# already has PyTorch and other ML dependencies, you can
-# typically just pip-install vLLM directly.
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir vllm
+# 3. Install python libraries, including accelerate, transformers, etc.
+#    `--no-cache-dir` helps reduce final image size.
+RUN mkdir -p /home/jovyan/.cache/huggingface/transformers && \
+    chown -R jovyan /home/jovyan/.cache/huggingface
 
-# Optionally: If you want a specific Hugging Face transformer
-# version, or any other libraries:
-# RUN pip install --no-cache-dir transformers==4.x.x
+RUN pip install --no-cache-dir \
+    accelerate \
+    transformers \
+    torch
 
-# (Optional) Clean up to reduce image size
-RUN conda clean -tipsy || true
 
-# Switch back to the notebook user (UID=1000) to run code
-USER $NB_UID
+ENV TRANSFORMERS_CACHE=/home/jovyan/.cache/huggingface/transformers
 
-# By default, Jupyter is the entrypoint on datahub images.
-# We can add an entrypoint to run vLLM if desired, but
-# we typically just run the model from within the container.
+USER jovyan
+
+RUN python -c "\
+import logging; logging.basicConfig(level=logging.INFO); \
+from transformers import AutoModelForCausalLM, AutoTokenizer; \
+AutoTokenizer.from_prrained('EleutherAI/pythia-125m'); \
+AutoModelForCausalLM.om_pretrained('EleutherAI/pythia-125m'); \
+print('Done pre-caching pythia-125m!')"
+
+COPY llm-serve.py /home/jovyan/llm-serve.py
+
+# # 3) install packages using notebook user
+# RUN pip install --no-cache-dir vllm 
+
+
