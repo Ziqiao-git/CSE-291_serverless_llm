@@ -1,28 +1,35 @@
+###############################################################################
+# Dockerfile to pre-download "EleutherAI/pythia-1b" via Hugging Face, and serve with vLLM
+###############################################################################
 ARG BASE_CONTAINER=ghcr.io/ucsd-ets/scipy-ml-notebook:2025.2-stable
 FROM ${BASE_CONTAINER}
 
 USER root
 
-# (A) Optional system packages
+# (A) Optional: Install system packages
 RUN apt-get update && \
     apt-get install -y htop && \
     rm -rf /var/lib/apt/lists/*
 
-# (B) Create a folder to store vLLM-cached models
-RUN mkdir -p /opt/vllm_models && chmod 777 /opt/vllm_models
+# (B) Create a local directory for the Hugging Face cache
+ENV HF_HOME=/opt/huggingface
+ENV TRANSFORMERS_CACHE=/opt/huggingface
+RUN mkdir -p /opt/huggingface && chmod 777 /opt/huggingface
 
-# (C) Install vLLM
-RUN pip install --no-cache-dir vllm
+# (C) Install necessary Python libraries, including vLLM and transformers
+RUN pip install --no-cache-dir vllm transformers
 
-# (D) Pre-download Pythia-1B using vLLM's "tools.download" script (not entrypoints.download!)
-RUN python -m vllm.tools.download \
-    --model EleutherAI/pythia-1b \
-    --destination /opt/vllm_models \
-    --trust-remote-code
+# (D) Pre-download pythia-1b using standard huggingface/transformers calls
+RUN python -c "\
+from transformers import AutoModelForCausalLM, AutoTokenizer;\
+AutoTokenizer.from_pretrained('EleutherAI/pythia-1b', cache_dir='/opt/huggingface');\
+AutoModelForCausalLM.from_pretrained('EleutherAI/pythia-1b', cache_dir='/opt/huggingface');\
+print('Pre-downloaded pythia-1b into /opt/huggingface')\
+"
 
-# (E) Copy your startup script that launches vLLM
+# (E) Copy a script that launches vLLM’s OpenAI-compatible API server
 COPY llm-serve.sh /app/llm-serve.sh
 RUN chmod +x /app/llm-serve.sh
 
-# (F) Default command
+# (F) Default command: run your serve script
 CMD ["/app/llm-serve.sh"]
